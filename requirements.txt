@@ -1,1 +1,1 @@
-python-whois
+python-whois=0.7.0
