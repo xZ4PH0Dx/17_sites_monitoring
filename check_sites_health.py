@@ -1,5 +1,5 @@
-import requests as r
-import whois
+from requests import get
+from whois import whois
 import sys
 from datetime import datetime
 
@@ -9,35 +9,37 @@ def load_urls4check(path):
         return file.read().split('\n')
 
 
-def is_server_respond_with_200(url):
+def is_server_respond_with_ok(url):
     try:
-        return r.get(url).ok
-    except r.ConnectionError:
+        return get(url).ok
+    except ConnectionError:
         return False
 
 
 def get_domain_expiration_date(url):
-    exp_date = whois.whois(url)['expiration_date']
+    exp_date = whois(url)['expiration_date']
     if exp_date is None:
         return False
+    if type(exp_date) == 'list':
+        exp_date = exp_date[0]
     return abs((exp_date - datetime.utcnow()).days)
 
 
-def is_not_expire_in_month(datediff):
-    return datediff > 30
+def is_not_expire_in_days(datediff, n_days):
+    return datediff > n_days
 
 
-def combine_checks(list_urls):
+def combine_checks(list_urls, n_days):
     check_list = {}
     for url in list_urls:
         if url:
-            status_code = is_server_respond_with_200(url)
+            status_code = is_server_respond_with_ok(url)
             exp_date = get_domain_expiration_date(url)
             check_list[url] = {
                     'status code': 'OK'
                     if status_code else 'NOT OK',
                     'expiration date': 'OK'
-                    if is_not_expire_in_month(exp_date)
+                    if is_not_expire_in_days(exp_date, n_days)
                     else 'NOT OK'
                 }
     return check_list
@@ -54,5 +56,5 @@ if __name__ == '__main__':
         sys.exit("There's no file given")
     filepath = sys.argv[1]
     loaded_urls_list = load_urls4check(filepath)
-    check_list = combine_checks(loaded_urls_list)
+    check_list = combine_checks(loaded_urls_list, 30)
     pprint_check_list(check_list)
