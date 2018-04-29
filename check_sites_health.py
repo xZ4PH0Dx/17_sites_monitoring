@@ -1,4 +1,4 @@
-import requests as re
+import requests as r
 import whois
 import sys
 from datetime import datetime
@@ -6,44 +6,39 @@ from datetime import datetime
 
 def load_urls4check(path):
     with open(path) as file:
-        return file.read()
-
-
-def get_list_urls(list_urls):
-    return list_urls.split()
+        return file.read().split('\n')
 
 
 def is_server_respond_with_200(url):
     try:
-        status_code = re.get(url).status_code
-    except re.ConnectionError:
+        return r.get(url).ok
+    except r.ConnectionError:
         return False
-    return True if status_code == 200 else False
 
 
 def get_domain_expiration_date(url):
     exp_date = whois.whois(url)['expiration_date']
-    return exp_date if exp_date else None
-
-
-def not_expire_in_month(exp_date):
     if exp_date is None:
         return False
-    datediff = abs((exp_date - datetime.utcnow()).days)
-    return True if datediff > 30 else False
+    return abs((exp_date - datetime.utcnow()).days)
 
 
-def combined_check(list_urls):
+def is_not_expire_in_month(datediff):
+    return datediff > 30
+
+
+def combine_checks(list_urls):
     check_list = {}
     for url in list_urls:
-        status_code = is_server_respond_with_200(url)
-        exp_date = get_domain_expiration_date(url)
-        check_list[url] = {
-                'status code': 'OK'
-                if status_code else 'NOT OK',
-                'expiration date': 'OK'
-                if not_expire_in_month(exp_date)
-                else 'NOT OK'
+        if url:
+            status_code = is_server_respond_with_200(url)
+            exp_date = get_domain_expiration_date(url)
+            check_list[url] = {
+                    'status code': 'OK'
+                    if status_code else 'NOT OK',
+                    'expiration date': 'OK'
+                    if is_not_expire_in_month(exp_date)
+                    else 'NOT OK'
                 }
     return check_list
 
@@ -56,9 +51,8 @@ def pprint_check_list(check_list):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        sys.exit('There\'s no file given')
+        sys.exit("There's no file given")
     filepath = sys.argv[1]
-    loaded_urls = load_urls4check(filepath)
-    urls_list = get_list_urls(loaded_urls)
-    check_list = combined_check(urls_list)
+    loaded_urls_list = load_urls4check(filepath)
+    check_list = combine_checks(loaded_urls_list)
     pprint_check_list(check_list)
