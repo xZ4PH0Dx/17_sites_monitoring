@@ -1,7 +1,10 @@
-from requests import get
+from requests import get, ConnectionError
 from whois import whois
 import sys
 from datetime import datetime
+
+
+ndays_to_expire = 30
 
 
 def load_urls4check(path):
@@ -56,5 +59,5 @@ if __name__ == '__main__':
         sys.exit("There's no file given")
     filepath = sys.argv[1]
     loaded_urls_list = load_urls4check(filepath)
-    check_list = combine_checks(loaded_urls_list, 30)
+    check_list = combine_checks(loaded_urls_list, ndays_to_expire)
     pprint_check_list(check_list)
