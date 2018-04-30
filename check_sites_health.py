@@ -4,9 +4,6 @@ import sys
 from datetime import datetime
 
 
-ndays_to_expire = 30
-
-
 def load_urls4check(path):
     with open(path) as file:
         return file.read().split('\n')
@@ -19,11 +16,11 @@ def is_server_respond_with_ok(url):
         return False
 
 
-def get_domain_expiration_date(url):
+def get_domain_expiration_datediff(url):
     exp_date = whois(url)['expiration_date']
     if exp_date is None:
         return False
-    if type(exp_date) == 'list':
+    if isinstance((exp_date), list):
         exp_date = exp_date[0]
     return abs((exp_date - datetime.utcnow()).days)
 
@@ -33,23 +30,23 @@ def is_not_expire_in_days(datediff, n_days):
 
 
 def combine_checks(list_urls, n_days):
-    check_list = {}
+    checks_dict = {}
     for url in list_urls:
         if url:
             status_code = is_server_respond_with_ok(url)
-            exp_date = get_domain_expiration_date(url)
-            check_list[url] = {
+            exp_date = get_domain_expiration_datediff(url)
+            checks_dict[url] = {
                     'status code': 'OK'
                     if status_code else 'NOT OK',
                     'expiration date': 'OK'
                     if is_not_expire_in_days(exp_date, n_days)
                     else 'NOT OK'
                 }
-    return check_list
+    return checks_dict
 
 
-def pprint_check_list(check_list):
-    for url, checks in check_list.items():
+def pprint_check_list(checks_dict):
+    for url, checks in checks_dict.items():
         for check, result in checks.items():
             print(url, 'check for', check, ':', result)
 
@@ -59,5 +56,5 @@ if __name__ == '__main__':
         sys.exit("There's no file given")
     filepath = sys.argv[1]
     loaded_urls_list = load_urls4check(filepath)
-    check_list = combine_checks(loaded_urls_list, ndays_to_expire)
-    pprint_check_list(check_list)
+    checks = combine_checks(loaded_urls_list, 30)
+    pprint_check_list(checks)
