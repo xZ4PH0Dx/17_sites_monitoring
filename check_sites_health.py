@@ -29,7 +29,7 @@ def is_not_expire_in_days(datediff, n_days):
     return datediff > n_days
 
 
-def combine_checks(list_urls, n_days):
+def combine_checks(list_urls, n_days=30):
     checks_dict = {}
     for url in list_urls:
         if url:
@@ -56,5 +56,5 @@ if __name__ == '__main__':
         sys.exit("There's no file given")
     filepath = sys.argv[1]
     loaded_urls_list = load_urls4check(filepath)
-    checks = combine_checks(loaded_urls_list, 30)
+    checks = combine_checks(loaded_urls_list)
     pprint_check_list(checks)
